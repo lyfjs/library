@@ -1,0 +1,88 @@
+.catalog-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.catalog-controls input, .catalog-controls select {
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    min-width: 180px;
+    flex: 1;
+    max-width: 200px;
+}
+.book-card img {
+    width: 100%;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.book-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+    color: #2c3e50;
+}
+.book-card p {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+
+#bookList {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile default: 1 per row */
+    gap: 20px;
+}
+
+.book-card-content {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    
+    
+}
+
+.filter-info {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+}
+
+.filter-info small {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+
+@media (min-width: 768px) {
+    #bookList {
+        grid-template-columns: 1fr; /* Force one card per row */
+    }
+
+    .book-card-content {
+        flex-direction: row; /* Image left, text right */
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .book-image {
+        max-width: 150px;
+        height: auto;
+    }
+
+    .book-text {
+        flex: 1;
+        padding-left: 15px;
+    }
+}
