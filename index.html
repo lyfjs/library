@@ -27,8 +27,8 @@
             <ul class="navbar__menu" id="navMenu">
                 <li><a href="#" class="active">Home</a></li>
                 <li><a href="books.html">Catalog</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Contact</a></li>
+                <li><a href="mylibrary.html" id="myLibraryLink">My Library</a></li>
+                <li><a href="index.html#info">Contact</a></li>
                 <li id="authLink"><a href="login.html">Login</a></li>
             </ul>
         </div>
@@ -36,30 +36,25 @@
 
     <div class="container">
         <div class="content">
-            <div id="welcomeSection" class="welcome-section" style="display: none;">
-                <h2>Welcome back!</h2>
-                <p>You are logged in to the LYFJSHS Library System.</p>
-            </div>
-            
             <section class="welcome-section">
                 <h2>Welcome to the LYFJSHS Library System</h2>
                 <p>Here you can manage your library resources efficiently.</p>
-                <div class="features">
-                    <div class="feature-card">
+                <div class="features pointed" >
+                    <div class="feature-card" onclick="redirectCatalog();">
                         <div class="feature-icon">
                             <img src="static/img/books.png" alt="Book Catalog" class="feature-icon__img" data-animated-src="static/img/books.gif">
                         </div>
                         <h3>Book Catalog</h3>
                         <p>Browse our extensive collection of books</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card" id="advancedSearchCard" style="cursor: pointer;">
                         <div class="feature-icon">
                             <img src="static/img/searchbook.png" alt="Search" class="feature-icon__img" data-animated-src="static/img/searchbook.gif">
                         </div>
-                        <h3>Search</h3>
-                        <p>Find resources quickly with advanced search</p>
+                        <h3>Advance Search</h3>
+                        <p>Find resources instantly with our AI-powered search engine.</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card" onclick="redirectMylibrary();">
                         <div class="feature-icon">
                             <img src="static/img/borrow.png" alt="Borrowing" class="feature-icon__img" data-animated-src="static/img/borrow.gif">
                         </div>
@@ -92,9 +87,110 @@
                     <p>Join our summer reading challenge and win exciting prizes!</p>
                 </div>
             </section>
+
+            
         </div>
     </div>
 
+    <!-- Advanced Search Modal -->
+    <div id="searchModal" class="search-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; backdrop-filter: blur(5px);">
+        <div class="search-modal-content" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 15px; padding: 40px; width: 80%; max-width: 800px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);">
+            <div class="search-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h2 style="margin: 0; color: #333; font-size: 28px; font-weight: 600;">Advanced Search</h2>
+                <button id="closeSearchModal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 5px; border-radius: 50%; transition: all 0.3s ease;">&times;</button>
+            </div>
+            
+            <div class="search-form">
+                <div class="search-input-container" style="position: relative; margin-bottom: 20px;">
+                    <input type="text" id="searchInput" placeholder="Search for books, authors, subjects, or keywords..." style="width: 100%; padding: 20px 25px; font-size: 18px; border: 2px solid #e1e5e9; border-radius: 12px; outline: none; transition: all 0.3s ease; box-sizing: border-box;">
+                    <button id="searchSubmit" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background-color:#2c3e50; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s ease;">Search</button>
+                </div>
+                
+                <div class="search-filters" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <select id="categoryFilter" style="padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px; outline: none;">
+                        <option value="">All Categories</option>
+                        <option value="fiction">Fiction</option>
+                        <option value="non-fiction">Non-Fiction</option>
+                        <option value="science">Science</option>
+                        <option value="history">History</option>
+                        <option value="technology">Technology</option>
+                        <option value="literature">Literature</option>
+                    </select>
+                    
+                    <select id="authorFilter" style="padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px; outline: none;">
+                        <option value="">All Authors</option>
+                        <option value="popular">Popular Authors</option>
+                    </select>
+                    
+                    <select id="yearFilter" style="padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px; outline: none;">
+                        <option value="">Any Year</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                        <option value="older">Older</option>
+                    </select>
+                </div>
+                
+                <div class="search-options" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="exactMatch" style="transform: scale(1.2);">
+                        <span style="font-size: 14px; color: #555;">Exact match</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="includeDescription" style="transform: scale(1.2);">
+                        <span style="font-size: 14px; color: #555;">Search in descriptions</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="availableOnly" style="transform: scale(1.2);">
+                        <span style="font-size: 14px; color: #555;">Available on Library</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div id="searchResults" class="search-results" style="max-height: 300px; overflow-y: auto; border-top: 1px solid #e1e5e9; padding-top: 20px; display: none;">
+                <!-- Search results will be populated here -->
+            </div>
+        </div>
+    </div>
+    <section id="info">
+        <footer class="footer">
+            <div class="footer__container">
+                <div class="footer__info">
+                    <h3>LYFJSHS Library</h3>
+                    <p>Providing quality resources and services to our community.</p>
+                </div>
+
+                <div class="footer__contact">
+                    <h4>Contact Us</h4>
+                    <p>Email: aczontongao@gmail.com</p>
+                    <p>Phone: (63)9152264050</p>
+                </div>
+            </div>
+            <div class="footer__bottom">
+                <p>&copy; 2025  LYFJSHS Digital Library Management System. All rights reserved.</p>
+            </div>
+        </footer>
+
+    </section>
+
+    <script src="config.js"></script>
+    <script src="static/js/viewBook.js"></script>
+    <script src="static/js/searchEngine.js"></script>
     <script src="static/js/index.js"></script>
+
+    <script>
+
+function redirectCatalog() {
+            window.location.href = 'books.html'; 
+        }
+
+        function redirectMylibrary() {
+            window.location.href = 'mylibrary.html'; 
+        }
+
+
+
+    </script>
 </body>
 </html>

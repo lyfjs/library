@@ -587,7 +587,7 @@
                                         <i class="fas fa-tag"></i>
                                         Book Type
                                     </label>
-                                    <select id="bookType" name="bookType" class="form-select" required onchange="toggleFields(this)">
+                                    <select id="bookType" name="bookType" class="form-select"  onchange="toggleFields(this)">
                                         <option value="" disabled>Select book type</option>
                                         <option value="Module" selected>Module</option>
                                         <option value="Novel">Novel</option>
@@ -658,24 +658,31 @@
                                         <i class="fas fa-sort-numeric-up"></i>
                                         Quantity
                                     </label>
-                                    <input class="form-input" name="quantity" id="quantity" type="number" placeholder="Enter quantity" min="1" required>
+                                    <input class="form-input" name="quantity" id="quantity" type="number" placeholder="Enter quantity" min="1" >
                                 </div>
                             </div>
 
                             <div class="form-row">
+                                <div class="form-group author-group">
+                                    <label class="form-label" for="author">
+                                        <i class="fas fa-user"></i>
+                                        Author
+                                    </label>
+                                    <input class="form-input" name="author" id="author" type="text" placeholder="Enter author name">
+                                </div>
                                 <div class="form-group">
                                     <label class="form-label" for="publisher">
                                         <i class="fas fa-building"></i>
                                         Publisher
                                     </label>
-                                    <input class="form-input" name="publisher" id="publisher" type="text" placeholder="Enter publisher name" required>
+                                    <input class="form-input" name="publisher" id="publisher" type="text" placeholder="Enter publisher name" >
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="description">
                                         <i class="fas fa-align-left"></i>
                                         Description
                                     </label>
-                                    <input class="form-input" name="description" id="description" type="text" placeholder="Enter book description" required>
+                                    <input class="form-input" name="description" id="description" type="text" placeholder="Enter book description" >
                                 </div>
                             </div>
 
@@ -687,6 +694,34 @@
                                     </label>
                                     <input class="form-input" name="cover" id="cover" type="file" accept="image/*">
                                 </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="file_path">
+                                            <i class="fas fa-file"></i> Upload file
+                                        </label>
+                                        <input class="form-input" name="file_path" id="file_path" type="file" accept="">
+                                    </div>
+                                
+<div class="form-group">
+    <label class="form-label" for="link">
+        <i class="fas fa-link"></i> Raw PDF Link
+    </label>
+    <input 
+        class="form-input" 
+        name="link" 
+        id="link" 
+        type="url" 
+        pattern="^https?:\/\/.+\.(pdf|html)$"
+        placeholder="https://example.com/document.pdf or .html"
+        title="Please enter a valid PDF or HTML URL"
+        oninput="validatePdfUrl(this)">
+</div>
+                                </div>
+                                
+
+
+                                
                                 <div class="form-group">
                                     <label class="form-label">
                                         <i class="fas fa-eye"></i>
@@ -797,9 +832,67 @@
                         <h1 class="page-title">Users</h1>
                         <p class="page-subtitle">Manage user accounts</p>
                     </div>
-                    <div class="form-card">
-                        <p>Users management coming soon...</p>
+                    <!-- Users Content -->
+                <div class="content-section" id="usersContent" style="display: none;">
+                    <div class="page-header">
+                        <h1 class="page-title">Users</h1>
+                        <p class="page-subtitle">Manage student accounts (Superadmin Only)</p>
                     </div>
+
+                    <div class="form-card">
+                        <!-- Search and Filter Controls -->
+                        <div class="search-controls">
+                            <div class="search-row">
+                                <div class="search-group">
+                                    <input type="text" id="userSearchInput" placeholder="Search users by name or email..." class="search-input">
+                                </div>
+                                <div class="search-group">
+                                    <select id="filterGradeLevel" class="search-select">
+                                        <option value="">All Grade Levels</option>
+                                        <option value="11">Grade 11</option>
+                                        <option value="12">Grade 12</option>
+                                    </select>
+                                </div>
+                                <div class="search-group">
+                                    <select id="filterSection" class="search-select">
+                                        <option value="">All Sections</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Users Table -->
+                        <div class="books-table-container">
+                            <table class="books-table" id="usersTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Grade Level</th>
+                                        <th>Section</th>
+                                        <th>Phone</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Users will be loaded here dynamically -->
+                                </tbody>
+                            </table>
+                            
+                            <!-- Loading indicator -->
+                            <div id="usersLoadingIndicator" class="loading-indicator">
+                                <div class="spinner"></div>
+                                <p>Loading users...</p>
+                            </div>
+                            
+                            <!-- No users message -->
+                            <div id="noUsersMessage" class="no-books-message" style="display: none;">
+                                <p>No users found matching your criteria.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 </div>
 
                 <!-- Requests Content -->
@@ -841,14 +934,14 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="editTitle">Book Title</label>
-                            <input class="form-input" name="title" id="editTitle" type="text" required>
+                            <input class="form-input" name="title" id="editTitle" type="text" >
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="editBookType">Book Type</label>
-                            <select id="editBookType" name="bookType" class="form-select" required onchange="toggleEditFields(this)">
+                            <select id="editBookType" name="bookType" class="form-select"  onchange="toggleEditFields(this)">
                                 <option value="Module">Module</option>
                                 <option value="Novel">Novel</option>
                             </select>
@@ -903,20 +996,60 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="editQuantity">Quantity</label>
-                            <input class="form-input" name="quantity" id="editQuantity" type="number" min="1" required>
+                            <input class="form-input" name="quantity" id="editQuantity" type="number" min="1" >
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="editPublisher">Publisher</label>
-                            <input class="form-input" name="publisher" id="editPublisher" type="text" required>
+                            <input class="form-input" name="publisher" id="editPublisher" type="text" >
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="editDescription">Description</label>
-                            <input class="form-input" name="description" id="editDescription" type="text" required>
+                            <input class="form-input" name="description" id="editDescription" type="text" >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="editAuthor">Author</label>
+                            <input class="form-input" name="author" id="editAuthor" type="text">
+
                         </div>
                     </div>
+
+
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="editFilePath">
+                                <i class="fas fa-file"></i>
+                                Upload file
+                            </label>
+                            <input class="form-input" name="file_path" id="editFilePath" type="file" accept="">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="editCurrentFile">
+                                <i class="fas fa-file"></i>
+                                Current File
+                            </label>
+                            <div id="editCurrentFile" style="padding: 0.5rem; background: #f3f4f6; border-radius: 4px;">
+                                <span id="currentFileName">No file uploaded</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="editLink">
+                                <i class="fas fa-link"></i>
+                                Raw PDF Link
+                            </label>
+                            <input class="form-input" name="link" id="editLink" type="url" placeholder="www.example.com/title.pdf">
+                        </div>
+                    </div>
+
+
 
                     <div class="form-row">
                         <div class="form-group">
@@ -943,6 +1076,10 @@
         </div>
     </div>
 
+<script src="js/admin_edit_users.js"></script>
+<script src="js/admin_edit_books.js"></script>
+<script src="js/admin_book_request.js"></script>
+<script src="../config.js"></script>
 <script src="js/admin_index.js">
 
     </script>
