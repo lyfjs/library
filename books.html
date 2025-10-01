@@ -6,6 +6,7 @@
     <title>Book Catalog - LYFJSHS Library</title>
     <link rel="stylesheet" href="static/style/index.css">
     <link rel="stylesheet" href="static/style/books.css">
+    <link rel="stylesheet" href="static/style/view_books.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -18,7 +19,7 @@
             <ul class="navbar__menu" id="navMenu">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="books.html" class="active">Catalog</a></li>
-                <li><a href="#">About</a></li>
+                <li><a href="mylibrary.html">My Library</a></li>
                 <li><a href="#">Contact</a></li>
                 <li id="authLink"><a href="login.html">Login</a></li>
             </ul>
@@ -26,15 +27,11 @@
     </nav>
 
     <div class="container">
-        <div id="welcomeSection" class="welcome-section" style="display: none;">
-            <h2>Welcome back!</h2>
-            <p>You are logged in to the LYFJSHS Library System.</p>
-        </div>
-        
         <section class="welcome-section">
             <h2>Book Catalog</h2>
             <p>Browse our collection of books. Use the search and filter options to find your next read.</p>
         </section>
+
 
         <div class="catalog-controls">
             <input type="text" id="searchInput" placeholder="Search books...">
@@ -74,31 +71,9 @@
         <section class="features" id="bookList"></section>
     </div>
 
-    <footer class="footer">
-        <div class="footer__container">
-            <div class="footer__info">
-                <h3>LYFJSHS Library</h3>
-                <p>Providing quality resources and services to our community.</p>
-            </div>
-            <div class="footer__links">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms of Service</a></li>
-                    <li><a href="#">FAQ</a></li>
-                </ul>
-            </div>
-            <div class="footer__contact">
-                <h4>Contact Us</h4>
-                <p>Email: NA</p>
-                <p>Phone: NA</p>
-            </div>
-        </div>
-        <div class="footer__bottom">
-            <p>&copy; 2025  LYFJSHS Digital Library Management System. All rights reserved.</p>
-        </div>
-    </footer>
-
+    <script src="config.js"></script>
+    <script src="static/js/viewBook.js"></script>
     <script src="static/js/books.js"></script>
+    <script src="static/js/library.js"></script>
 </body>
 </html>

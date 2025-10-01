@@ -1,4 +1,4 @@
-        let API_SERVER = 'https://lyfjs-backend-deployment.onrender.com';
+        let API_SERVER = appConfig.apiEndpoint;
         
         // Check if already logged in on page load
         document.addEventListener('DOMContentLoaded', () => {
@@ -53,7 +53,8 @@
                     // Store admin info in localStorage
                     localStorage.setItem('admin', JSON.stringify({
                         id: data.admin_id,
-                        username: data.username || username
+                        username: data.username || username,
+                        superadmin: data.superadmin || false  // This will now work with the updated API
                     }));
                     localStorage.setItem('adminLoggedIn', 'true');
                     

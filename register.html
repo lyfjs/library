@@ -5,6 +5,29 @@
     <title>Register - LYFJSHS Library System</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="static/style/register.css">
+    <style>
+        .checkbox-field {
+            margin: 15px 0;
+            padding: 10px 0;
+        }
+        
+        .checkbox-field label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .checkbox-field input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.1);
+        }
+        
+        .checkbox-field label:hover {
+            color: #333;
+        }
+    </style>
 </head>
 <body>
     <div class="wrapper">
@@ -26,8 +49,18 @@
                 <label>Last Name</label>
             </div>
             <div class="input-field">
-                <input type="text" id="middle_name" name="middle_name" required>
+                <input type="text" id="suffix" name="suffix" placeholder="Jr., Sr., III, etc.">
+                <label>Suffix (Optional)</label>
+            </div>
+            <div class="input-field">
+                <input type="text" id="middle_name" name="middle_name">
                 <label>Middle Name</label>
+            </div>
+            <div class="checkbox-field">
+                <label>
+                    <input type="checkbox" id="no_middle_name" name="no_middle_name">
+                    I don't have a middle name
+                </label>
             </div>
             <div class="input-field">
                 <input type="email" id="email" name="email" required>
@@ -35,8 +68,8 @@
             </div>
 
             <div class="input-field">
-                <input type="text" id="lrn_number" name="lrn_number" required>
-                <label>LRN Number</label>
+                <input type="text" id="lrn_number" name="lrn_number" required maxlength="12" pattern="[0-9]{12}" title="LRN must be exactly 12 digits">
+                <label>LRN Number (12 digits)</label>
             </div>
             <div class="input-field">
                 <input type="tel" id="phone_number" name="phone_number" required>
@@ -84,17 +117,81 @@
             </div>
         </form>
     </div>
-
+    <script src="config.js"></script>
     <script>
+        // Handle "no middle name" checkbox
+        document.getElementById('no_middle_name').addEventListener('change', function() {
+            const middleNameField = document.getElementById('middle_name');
+            const errorEl = document.getElementById('errorMessage');
+            if (this.checked) {
+                middleNameField.disabled = true;
+                middleNameField.value = '';
+                middleNameField.style.opacity = '0.5';
+                // Hide any prior middle-name error
+                if (errorEl && errorEl.style.display === 'block' && errorEl.textContent.includes('middle name')) {
+                    errorEl.style.display = 'none';
+                }
+            } else {
+                middleNameField.disabled = false;
+                middleNameField.style.opacity = '1';
+            }
+        });
+        
+        // Handle LRN input to only allow numbers and limit to 12 digits
+        document.getElementById('lrn_number').addEventListener('input', function(e) {
+            // Remove any non-numeric characters
+            this.value = this.value.replace(/[^0-9]/g, '');
+            // Limit to 12 digits
+            if (this.value.length > 12) {
+                this.value = this.value.substring(0, 12);
+            }
+        });
+    </script>
+    <script >
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            console.log(appConfig.apiEndpoint);
+            
+            // Get form values
+            const firstName = document.getElementById('first_name').value;
+            const lastName = document.getElementById('last_name').value;
+            const suffix = document.getElementById('suffix').value;
+            const middleName = document.getElementById('middle_name').value;
+            const noMiddleName = document.getElementById('no_middle_name').checked;
+            const lrnNumber = document.getElementById('lrn_number').value;
+            
+            // Validate LRN (must be exactly 12 digits)
+            if (!/^[0-9]{12}$/.test(lrnNumber)) {
+                document.getElementById('errorMessage').textContent = 'LRN must be exactly 12 digits';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('successMessage').style.display = 'none';
+                return;
+            }
+            
+            // Handle middle name logic
+            let finalMiddleName = middleName;
+            if (noMiddleName) {
+                finalMiddleName = 'N/A'; // send 'N/A' if no middle name
+            } else if (!middleName.trim()) {
+                document.getElementById('errorMessage').textContent = 'Please enter your middle name or check "I don\'t have a middle name"';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('successMessage').style.display = 'none';
+                return;
+            }
+            
+            // Concatenate last name with suffix if provided
+            let finalLastName = lastName;
+            if (suffix.trim()) {
+                finalLastName = lastName + ' ' + suffix.trim();
+            }
             
             const formData = {
-                first_name: document.getElementById('first_name').value,
-                last_name: document.getElementById('last_name').value,
-                middle_name: document.getElementById('middle_name').value,
+                first_name: firstName,
+                last_name: finalLastName,
+                middle_name: finalMiddleName,
+                no_middle_name: noMiddleName,
                 email: document.getElementById('email').value,
-                lrn_number: document.getElementById('lrn_number').value,
+                lrn_number: lrnNumber,
                 phone_number: document.getElementById('phone_number').value,
                 adviser_name: document.getElementById('adviser_name').value,
                 grade_level: document.getElementById('grade_level').value,
@@ -114,7 +211,7 @@
             }
             
             try {
-                const response = await fetch('https://lyfjs-backend-deployment.onrender.com/api/register', {
+                const response = await fetch(appConfig.apiEndpoint + '/api/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

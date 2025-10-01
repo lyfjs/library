@@ -1,4 +1,4 @@
-let API_SERVER = 'https://lyfjs-backend-deployment.onrender.com'
+let API_SERVER = appConfig.apiEndpoint;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Page loaded, checking authentication...');
@@ -116,6 +116,8 @@ function setupNavigation() {
 
 // Show content based on navigation
 function showContent(contentType) {
+    console.log('Showing content:', contentType);
+    
     // Hide all content sections
     const allSections = document.querySelectorAll('.content-section, .dashboard-content');
     allSections.forEach(section => {
@@ -146,6 +148,9 @@ function showContent(contentType) {
             if (usersContent) {
                 usersContent.style.display = 'block';
                 usersContent.classList.add('visible');
+                if (typeof loadUsers === 'function') {
+                    loadUsers();
+                }
             }
             break;
         case 'requests':
@@ -153,6 +158,9 @@ function showContent(contentType) {
             if (requestsContent) {
                 requestsContent.style.display = 'block';
                 requestsContent.classList.add('visible');
+                if (typeof loadRequests === 'function') {
+                    loadRequests();
+                }
             }
             break;
         case 'history':
@@ -172,6 +180,114 @@ function showContent(contentType) {
             break;
     }
 }
+
+
+// Add CSS styles for the request management (add to your existing CSS or create a separate CSS file)
+const requestStyles = `
+<style>
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-approved {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.status-toReturn {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-returned {
+    background-color: #e0e7ff;
+    color: #3730a3;
+}
+
+.student-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.student-name {
+    font-weight: 500;
+    color: #374151;
+}
+
+.student-email {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.approve-btn {
+    background-color: #059669;
+    color: white;
+}
+
+.approve-btn:hover {
+    background-color: #047857;
+}
+
+.reject-btn {
+    background-color: #dc2626;
+    color: white;
+}
+
+.reject-btn:hover {
+    background-color: #b91c1c;
+}
+
+.return-btn {
+    background-color: #7c3aed;
+    color: white;
+}
+
+.return-btn:hover {
+    background-color: #6d28d9;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.requests-table-container {
+    overflow-x: auto;
+}
+
+.text-muted {
+    color: #6b7280;
+    font-style: italic;
+}
+</style>
+`;
+
+// Add styles to head if not already added
+if (!document.getElementById('requestStyles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'requestStyles';
+    styleElement.textContent = requestStyles.replace(/<\/?style>/g, '');
+    document.head.appendChild(styleElement);
+}
+
+
+
 
 // Setup event listeners for forms and interactions
 function setupEventListeners() {
@@ -247,37 +363,46 @@ function setupCoverPreview() {
     }
 }
 
-// Handle Add Book form submission
 async function handleAddBookSubmit(e) {
     e.preventDefault();
-    
-    const form = e.target;
-    const bookType = form.querySelector('#bookType').value;
-    let isValid = true;
-    
-    if (bookType === 'Novel') {
-        const genre = form.querySelector('#genre').value;
-        if (!genre) {
-            showMessage('Please select a genre for the novel.', 'error');
-            isValid = false;
-        }
-    } else {
-        const level = form.querySelector('#level').value;
-        const strand = form.querySelector('#strand').value;
-        const qtr = form.querySelector('#qtr').value;
-        
-        if (!level || !strand || !qtr) {
-            showMessage('Please fill in all required academic fields (Grade Level, Strand, and Quarter).', 'error');
-            isValid = false;
-        }
-    }
-    
-    if (isValid) {
-        await submitBook();
-    }
+    await submitBook();
 }
 
-// Submit book to API
+// Update the toggleFields function to remove required attributes
+function toggleFields(select) {
+    const form = select.closest('form');
+    if (!form) return;
+    
+    const showNovel = select.value === 'Novel';
+    const genreGroup = form.querySelector('#genreGroup');
+    const levelGroup = form.querySelector('#levelGroup');
+    const qtrGroup = form.querySelector('#qtrGroup');
+    const strandGroup = form.querySelector('#strandGroup');
+    const authorSelect = form.querySelector('.author-group');
+    
+    if (showNovel) {
+        if (genreGroup) genreGroup.style.display = 'block';
+        if (levelGroup) levelGroup.style.display = 'none';
+        if (qtrGroup) qtrGroup.style.display = 'none';
+        if (strandGroup) strandGroup.style.display = 'none';
+        if (authorSelect) authorSelect.style.display = 'block';
+    } else {
+        if (genreGroup) genreGroup.style.display = 'none';
+        if (levelGroup) levelGroup.style.display = 'block';
+        if (qtrGroup) qtrGroup.style.display = 'block';
+        if (strandGroup) strandGroup.style.display = 'block';
+        if (authorSelect) authorSelect.style.display = 'none';
+    }
+}
+function validatePdfUrl(input) {
+    const url = input.value.toLowerCase();
+    if (url && !url.endsWith('.pdf') && !url.endsWith('.html')) {
+        input.setCustomValidity('URL must point to a PDF or HTML file (ending with .pdf or .html)');
+    } else {
+        input.setCustomValidity('');
+    }
+}
+// Update the submitBook function to make all fields optional
 async function submitBook() {
     const submitBtn = document.getElementById('submitBtn');
     const originalText = submitBtn.innerHTML;
@@ -286,27 +411,83 @@ async function submitBook() {
     submitBtn.disabled = true;
     
     try {
-        const formData = new FormData();
-        
-        formData.append('title', document.getElementById('title').value);
-        formData.append('description', document.getElementById('description').value);
-        formData.append('quantity', document.getElementById('quantity').value);
-        formData.append('publisher', document.getElementById('publisher').value);
-        formData.append('bookType', document.getElementById('bookType').value);
-        
-        const bookType = document.getElementById('bookType').value;
-        if (bookType === 'Novel') {
-            formData.append('genre', document.getElementById('genre').value);
-        } else {
-            formData.append('level', document.getElementById('level').value);
-            formData.append('strand', document.getElementById('strand').value);
-            formData.append('qtr', document.getElementById('qtr').value);
+        // Update PDF/HTML URL validation
+        const linkInput = document.getElementById('link');
+        if (linkInput.value && 
+            !linkInput.value.toLowerCase().endsWith('.pdf') && 
+            !linkInput.value.toLowerCase().endsWith('.html')) {
+            throw new Error('Raw link must point to a PDF or HTML file');
         }
+        
+    } catch (error) {
+        console.error('Error submitting book:', error);
+        showMessage(error.message || 'Network error. Please check your connection.', 'error');
+    }
+
+
+    try {
+        // Handle file uploads if present
+        let coverFilename = null;
+        let filePathFilename = null;
         
         const coverFile = document.getElementById('cover').files[0];
         if (coverFile) {
-            formData.append('cover', coverFile);
+            const coverFormData = new FormData();
+            coverFormData.append('cover', coverFile);
+            
+            const coverResponse = await fetch(`${API_SERVER}/api/admin/books/upload-cover`, {
+                method: 'POST',
+                body: coverFormData,
+                credentials: 'include'
+            });
+            
+            if (coverResponse.ok) {
+                const coverData = await coverResponse.json();
+                coverFilename = coverData.filename;
+            }
         }
+        
+        const bookFile = document.getElementById('file_path').files[0];
+        if (bookFile) {
+            const fileFormData = new FormData();
+            fileFormData.append('file', bookFile);
+            
+            const fileResponse = await fetch(`${API_SERVER}/api/admin/books/upload-file`, {
+                method: 'POST',
+                body: fileFormData,
+                credentials: 'include'
+            });
+            
+            if (fileResponse.ok) {
+                const fileData = await fileResponse.json();
+                filePathFilename = fileData.filename;
+            }
+        }
+        
+        // Create FormData with optional fields
+        const formData = new FormData();
+        const fields = {
+            'title': document.getElementById('title').value || '',
+            'description': document.getElementById('description').value || '',
+            'quantity': document.getElementById('quantity').value || '0',
+            'publisher': document.getElementById('publisher').value || '',
+            'bookType': document.getElementById('bookType').value || '',
+            'link': document.getElementById('link').value || '',
+            'genre': document.getElementById('genre')?.value || '',
+            'author': document.getElementById('author')?.value || '',
+            'level': document.getElementById('level')?.value || '',
+            'strand': document.getElementById('strand')?.value || '',
+            'qtr': document.getElementById('qtr')?.value || ''
+        };
+        
+        // Append non-empty values to FormData
+        Object.entries(fields).forEach(([key, value]) => {
+            formData.append(key, value);
+        });
+        
+        // Add filenames if files were uploaded
+        if (coverFilename) formData.append('cover_filename', coverFilename);
+        if (filePathFilename) formData.append('file_path_filename', filePathFilename);
         
         const response = await fetch(`${API_SERVER}/api/admin/books`, {
             method: 'POST',
@@ -318,21 +499,19 @@ async function submitBook() {
         
         if (response.ok) {
             showMessage(data.message || 'Book added successfully!', 'success');
-            // Reset form
             document.getElementById('addBookForm').reset();
             const coverPreview = document.getElementById('coverPreview');
             if (coverPreview) {
                 coverPreview.src = '';
                 coverPreview.alt = 'No image selected';
             }
-            // Reset field visibility
             toggleFields(document.getElementById('bookType'));
         } else {
             showMessage(data.error || 'Failed to add book. Please try again.', 'error');
         }
     } catch (error) {
         console.error('Error submitting book:', error);
-        showMessage('Network error. Please check your connection.', 'error');
+        showMessage(error.message || 'Network error. Please check your connection.', 'error');
     } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -354,12 +533,14 @@ function toggleFields(select) {
     const qtrSelect = form.querySelector('#qtr');
     const strandSelect = form.querySelector('#strand');
     const genreSelect = form.querySelector('#genre');
+    const authorSelect = form.querySelector('.author-group');
     
     if (showNovel) {
         if (genreGroup) genreGroup.style.display = 'block';
         if (levelGroup) levelGroup.style.display = 'none';
         if (qtrGroup) qtrGroup.style.display = 'none';
         if (strandGroup) strandGroup.style.display = 'none';
+        if (authorSelect) authorSelect.style.display = 'block';
         
         if (levelSelect) levelSelect.removeAttribute('required');
         if (qtrSelect) qtrSelect.removeAttribute('required');
@@ -370,6 +551,7 @@ function toggleFields(select) {
         if (levelGroup) levelGroup.style.display = 'block';
         if (qtrGroup) qtrGroup.style.display = 'block';
         if (strandGroup) strandGroup.style.display = 'block';
+        if (authorSelect) authorSelect.style.display = 'none';
         
         if (levelSelect) levelSelect.setAttribute('required', 'required');
         if (qtrSelect) qtrSelect.setAttribute('required', 'required');
@@ -406,6 +588,7 @@ async function loadBooks() {
 }
 
 // Display books in the table
+// Display books in the table
 function displayBooks() {
     const tbody = document.getElementById('booksTableBody');
     const noBooksMessage = document.getElementById('noBooksMessage');
@@ -436,6 +619,7 @@ function displayBooks() {
             <td>${escapeHtml(book.genre || 'N/A')}</td>
             <td>${book.quantity}</td>
             <td>${escapeHtml(book.publisher)}</td>
+            <td>${escapeHtml(book.author || 'N/A')}</td>
             <td>
                 <button class="action-btn edit-btn" onclick="editBook(${book.id})">
                     <i class="fas fa-edit"></i> Edit
@@ -478,98 +662,10 @@ function filterBooks() {
     displayBooks();
 }
 
-// Edit book functionality
-async function editBook(bookId) {
-    try {
-        const response = await fetch(`${API_SERVER}/api/admin/books/${bookId}`, {
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch book details');
-        }
-        
-        const book = await response.json();
-        
-        // Populate the edit form
-        const editBookId = document.getElementById('editBookId');
-        const editTitle = document.getElementById('editTitle');
-        const editBookType = document.getElementById('editBookType');
-        const editLevel = document.getElementById('editLevel');
-        const editStrand = document.getElementById('editStrand');
-        const editQtr = document.getElementById('editQtr');
-        const editGenre = document.getElementById('editGenre');
-        const editQuantity = document.getElementById('editQuantity');
-        const editPublisher = document.getElementById('editPublisher');
-        const editDescription = document.getElementById('editDescription');
-        
-        if (editBookId) editBookId.value = book.id;
-        if (editTitle) editTitle.value = book.title;
-        if (editBookType) editBookType.value = book.bookType || 'Module';
-        if (editLevel) editBookType.value === 'Module' ? editLevel.value = book.level || '' : editLevel.value = '';
-        if (editStrand) editBookType.value === 'Module' ? editStrand.value = book.strand || '' : editStrand.value = '';
-        if (editQtr) editBookType.value === 'Module' ? editQtr.value = book.qtr || '' : editQtr.value = '';
-        if (editGenre) editBookType.value === 'Novel' ? editGenre.value = book.genre || '' : editGenre.value = '';
-        if (editQuantity) editQuantity.value = book.quantity;
-        if (editPublisher) editPublisher.value = book.publisher;
-        if (editDescription) editDescription.value = book.description || '';
-        
-        // Show current cover
-        const currentCover = document.getElementById('editCurrentCover');
-        if (currentCover) {
-            if (book.cover) {
-                currentCover.src = `${API_SERVER}/api/databasecontent/cover/${book.cover}`;
-                currentCover.style.display = 'block';
-            } else {
-                currentCover.style.display = 'none';
-            }
-        }
-        
-        // Toggle fields based on book type
-        toggleEditFields(editBookType);
-        
-        // Show the modal
-        const modal = document.getElementById('editModal');
-        if (modal) {
-            modal.style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Error loading book for edit:', error);
-        showMessage('Failed to load book details. Please try again.', 'error');
-    }
-}
 
-// Toggle fields in edit form based on book type
-function toggleEditFields(select) {
-    const form = select.closest('form');
-    if (!form) return;
-    
-    const showNovel = select.value === 'Novel';
-    const genreGroup = form.querySelector('#editGenreGroup');
-    const levelGroup = form.querySelector('#editLevelGroup');
-    const qtrGroup = form.querySelector('#editQtrGroup');
-    const strandGroup = form.querySelector('#editStrandGroup');
-    
-    if (showNovel) {
-        if (genreGroup) genreGroup.style.display = 'block';
-        if (levelGroup) levelGroup.style.display = 'none';
-        if (qtrGroup) qtrGroup.style.display = 'none';
-        if (strandGroup) strandGroup.style.display = 'none';
-    } else {
-        if (genreGroup) genreGroup.style.display = 'none';
-        if (levelGroup) levelGroup.style.display = 'block';
-        if (qtrGroup) qtrGroup.style.display = 'block';
-        if (strandGroup) strandGroup.style.display = 'block';
-    }
-}
 
-// Close the edit modal
-function closeEditModal() {
-    const modal = document.getElementById('editModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
+
+
 
 // Delete book functionality
 async function deleteBook(bookId) {
@@ -600,90 +696,9 @@ async function deleteBook(bookId) {
     }
 }
 
-// Handle edit form submission
-async function handleEditFormSubmission(e) {
-    e.preventDefault();
-    
-    const form = e.target;
-    const formData = new FormData(form);
-    const bookId = formData.get('book_id');
-    
-    try {
-        const submitBtn = form.querySelector('.submit-btn');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-        submitBtn.disabled = true;
-        
-        // Handle cover upload if a new file is selected
-        let coverFilename = null;
-        const coverFile = formData.get('cover');
-        if (coverFile && coverFile.size > 0) {
-            const coverFormData = new FormData();
-            coverFormData.append('cover', coverFile);
-            
-            const coverResponse = await fetch(`${API_SERVER}/api/admin/books/upload-cover`, {
-                method: 'POST',
-                body: coverFormData,
-                credentials: 'include'
-            });
-            
-            if (coverResponse.ok) {
-                const coverData = await coverResponse.json();
-                coverFilename = coverData.filename;
-            } else {
-                const coverError = await coverResponse.json();
-                throw new Error(coverError.error || 'Failed to upload cover');
-            }
-        }
-        
-        // Convert FormData to JSON for the API
-        const bookData = {
-            title: formData.get('title'),
-            description: formData.get('description') || '',
-            quantity: formData.get('quantity'),
-            publisher: formData.get('publisher') || '',
-            bookType: formData.get('bookType'),
-            level: formData.get('level') || '',
-            strand: formData.get('strand') || '',
-            qtr: formData.get('qtr') || '',
-            genre: formData.get('genre') || ''
-        };
-        
-        // Add cover filename if a new one was uploaded
-        if (coverFilename) {
-            bookData.cover = coverFilename;
-        }
-        
-        const response = await fetch(`${API_SERVER}/api/admin/books/${bookId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(bookData),
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to update book');
-        }
-        
-        // Reload the books list
-        await loadBooks();
-        closeEditModal();
-        
-        showMessage('Book updated successfully', 'success');
-    } catch (error) {
-        console.error('Error updating book:', error);
-        showMessage(error.message || 'Failed to update book. Please try again.', 'error');
-    } finally {
-        const submitBtn = form.querySelector('.submit-btn');
-        if (submitBtn) {
-            submitBtn.innerHTML = '<i class="fas fa-save"></i> Update Book';
-            submitBtn.disabled = false;
-        }
-    }
-}
+
+
+
 
 // Utility function to escape HTML
 function escapeHtml(text) {
@@ -758,12 +773,26 @@ function checkAuthStatus() {
     
     if (isLoggedIn && admin.id) {
         console.log('Admin authenticated:', admin);
+        
+        if (admin.superadmin) {
+            console.log('Superadmin is true');
+        } else {
+            console.log('Superadmin is false');
+        }
+        
         updateUI(admin);
+        setupUserAccess(admin.superadmin); // Add this line
     } else {
         console.log('Admin not authenticated, redirecting to login');
         redirectToLogin();
     }
 }
+
+// You'll also need to update the login process to store the superadmin flag
+// Look for where the login response is handled and update it to include superadmin
+// This is typically in your admin_login.js file, but if it's in this file, find where:
+// localStorage.setItem('admin', JSON.stringify(adminData));
+// and make sure it includes the superadmin flag
 
 async function logout() {
     try {
