@@ -324,14 +324,18 @@ function showReturnDateDialog() {
 
 // Reject a book request
 async function rejectRequest(requestId) {
-    if (!confirm('Are you sure you want to reject this request?')) {
-        return;
-    }
+    // Ask for reason in a simple prompt
+    const proceed = confirm('Are you sure you want to reject this request?');
+    if (!proceed) return;
+    let reason = prompt('Please provide a reason for rejection (optional):', '');
+    if (reason === null) reason = '';
     
     try {
         const response = await fetch(`${API_SERVER}/api/admin/requests/${requestId}/reject`, {
             method: 'PUT',
-            credentials: 'include'
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
         });
         
         if (!response.ok) {

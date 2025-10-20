@@ -1,5 +1,5 @@
  const appConfig = {
-  apiEndpoint: "https://perpetuable-mable-slumberously.ngrok-free.dev",
+  apiEndpoint: "http://127.0.0.1:2832",
   timeout: 5000,
 };
 

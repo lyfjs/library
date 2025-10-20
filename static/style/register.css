@@ -22,14 +22,22 @@ body::before {
   background-position: center;
   background-size: cover;
 }
+
+input::placeholder {
+  color: #cecece;
+
+
+}
+
 .wrapper {
+  background-color: #57575732;
   width: 400px;
   border-radius: 8px;
   padding: 30px;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(50px);
   margin: 30px 0;
   max-height: 80vh;
   overflow-y: auto;

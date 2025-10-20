@@ -5,7 +5,7 @@ let isSuperadmin = false;
 // Check if current admin is superadmin and show/hide admins section
 async function checkSuperadminStatus() {
     try {
-        const response = await fetch(`${API_SERVER}/api/admin/me`, {
+        const response = await fetch(`${appConfig.apiEndpoint}/api/admin/me`, {
             credentials: 'include'
         });
         
@@ -28,7 +28,7 @@ async function loadAdmins() {
     if (!isSuperadmin) return;
     
     try {
-        const response = await fetch(`${API_SERVER}/api/admin/admins`, {
+        const response = await fetch(`${appConfig.apiEndpoint}/api/admin/admins`, {
             credentials: 'include'
         });
         
@@ -80,6 +80,7 @@ function displayAdmins() {
                     ${admin.is_superadmin ? 'Superadmin' : 'Admin'}
                 </span>
             </td>
+            <td>${escapeHtml(admin.phone_number || '-')}</td>
             <td>${admin.created_at ? formatDate(admin.created_at) : '-'}</td>
             <td>
                 <div class="action-buttons">
@@ -102,6 +103,7 @@ function displayAdmins() {
 async function addAdmin() {
     const username = document.getElementById('adminUsername').value.trim();
     const password = document.getElementById('adminPassword').value;
+    const phoneNumber = (document.getElementById('adminPhoneNumber')?.value || '').trim();
     const isSuperadmin = document.getElementById('adminIsSuperadmin').checked;
     
     if (!username || !password) {
@@ -110,7 +112,7 @@ async function addAdmin() {
     }
     
     try {
-        const response = await fetch(`${API_SERVER}/api/admin/admins`, {
+        const response = await fetch(`${appConfig.apiEndpoint}/api/admin/admins`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -119,7 +121,8 @@ async function addAdmin() {
             body: JSON.stringify({
                 username: username,
                 password: password,
-                is_superadmin: isSuperadmin
+                is_superadmin: isSuperadmin,
+                phone_number: phoneNumber || null
             })
         });
         
@@ -131,6 +134,7 @@ async function addAdmin() {
             document.getElementById('adminUsername').value = '';
             document.getElementById('adminPassword').value = '';
             document.getElementById('adminIsSuperadmin').checked = false;
+            if (document.getElementById('adminPhoneNumber')) document.getElementById('adminPhoneNumber').value = '';
             // Reload admins
             await loadAdmins();
         } else {
@@ -167,6 +171,8 @@ async function updateAdmin() {
     const password = document.getElementById('editAdminPassword').value;
     const confirmPassword = document.getElementById('editAdminConfirmPassword').value;
     const isSuperadmin = document.getElementById('editAdminIsSuperadmin').checked;
+    const phoneNumberInput = document.getElementById('editAdminPhoneNumber');
+    const phone_number = phoneNumberInput ? phoneNumberInput.value.trim() : '';
     
     if (!username) {
         showMessage('Username is required.', 'error');
@@ -186,9 +192,10 @@ async function updateAdmin() {
     }
     
     try {
-        const updateData = {
+    const updateData = {
             username: username,
-            is_superadmin: isSuperadmin
+            is_superadmin: isSuperadmin,
+            phone_number: phone_number || null
         };
         
         // Only include password if provided
@@ -196,7 +203,7 @@ async function updateAdmin() {
             updateData.password = password;
         }
         
-        const response = await fetch(`${API_SERVER}/api/admin/admins/${adminId}`, {
+        const response = await fetch(`${appConfig.apiEndpoint}/api/admin/admins/${adminId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -235,7 +242,7 @@ async function deleteAdmin(adminId) {
     }
     
     try {
-        const response = await fetch(`${API_SERVER}/api/admin/admins/${adminId}`, {
+        const response = await fetch(`${appConfig.apiEndpoint}/api/admin/admins/${adminId}`, {
             method: 'DELETE',
             credentials: 'include'
         });
