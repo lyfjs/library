@@ -27,14 +27,26 @@
                 <label>Enter your password</label>
             </div>
 
+
+
             <button type="submit">Log In</button>
+                        <div class="forgot-password" style="margin-top:10px;">
+                <a href="#" id="forgotPasswordLink" style=" color: rgb(213, 253, 198); font-size: 0.9em;">Forgot Password?</a>
+            </div>
             <div class="register">
                 <p>Don't have an account? <a href="register.html" style="color: rgb(213, 253, 198);">Register here</a></p>
             </div>
+            
         </form>
     </div>
 	<script src="config.js" ></script>
     <script>
+        // Handle forgot password link
+        document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'reset_password.html';
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
