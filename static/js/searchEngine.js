@@ -4,6 +4,41 @@
  */
 
 
+// Utility function to resolve cover URLs
+const SearchBookUtils = {
+    resolveCoverUrl(cover) {
+        const API_BASE_URL = appConfig.apiEndpoint + '/api';
+        
+        // If no cover provided, return empty string
+        if (!cover) return '';
+        
+        // Clean up the cover path
+        const cleanPath = cover.trim();
+        
+        // Handle full URLs
+        if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+            return cleanPath;
+        }
+        
+        // Handle various path formats
+        if (cleanPath.startsWith('databasecontent/')) {
+            return `${API_BASE_URL}/${cleanPath}`;
+        }
+        if (cleanPath.startsWith('static/')) {
+            return cleanPath;
+        }
+        if (cleanPath.startsWith('./') || cleanPath.startsWith('../')) {
+            return cleanPath;
+        }
+        if (cleanPath.includes('/')) {
+            return cleanPath.replace(/^\/+/, '');
+        }
+        
+        // Default case: assume it's a cover filename
+        return `${API_BASE_URL}/databasecontent/cover/${cleanPath}`;
+    }
+};
+
 class AdvancedSearchEngine {
     constructor() {
         this.apiEndpoint = appConfig.apiEndpoint;
@@ -182,13 +217,12 @@ class AdvancedSearchEngine {
             const searchParams = this.buildSearchParams();
             console.log('Search params:', searchParams.toString());
             
-            const response = await this.fetchSearchResults(searchParams);
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            
-            const data = await response.json();
-            console.log('Search response:', data);
-            this.displaySearchResults(data);
+            const data = await this.fetchSearchResults(searchParams);
+            if (data.success) {
+                this.displaySearchResults(data);
+            } else {
+                this.showError(data.message || 'Search failed');
+            }
             
         } catch (error) {
             console.error('Search error:', error);
@@ -236,6 +270,8 @@ class AdvancedSearchEngine {
      * Fetch search results from the API
      */
     async fetchSearchResults(params) {
+        // Add AI search parameter
+        params.append('useAI', 'true');
         const url = `${this.apiEndpoint}/api/search?${params.toString()}`;
         console.log('Searching URL:', url);
         
@@ -243,20 +279,55 @@ class AdvancedSearchEngine {
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include',
-                timeout: 10000 // 10 second timeout
+                timeout: 15000 // Extended timeout for AI processing
             });
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            return response;
+            const data = await response.json();
+            console.log('AI Search Results:', data);
+
+            // Show AI explanation if available
+            if (data.explanation) {
+                this.showAIExplanation(data.explanation);
+            }
+            
+            return data; // Return the parsed data instead of the response
         } catch (error) {
             console.error('Fetch error:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Show AI-powered search explanation
+     */
+    showAIExplanation(explanation) {
+        const explanationDiv = document.createElement('div');
+        explanationDiv.className = 'ai-explanation';
+        explanationDiv.innerHTML = `
+            <div style="margin-bottom: 20px; padding: 12px 16px; background: #f0f7ff; border: 1px solid #cce3ff; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <i class="fas fa-robot" style="color: #0066cc;"></i>
+                    <span style="font-weight: 600; color: #0066cc;">AI Search Analysis</span>
+                </div>
+                <p style="margin: 0; color: #444; font-size: 14px; line-height: 1.5;">
+                    ${explanation}
+                </p>
+            </div>
+        `;
+        
+        // Insert explanation before search results
+        const resultsHeader = this.searchResults.querySelector('.search-results-header');
+        if (resultsHeader) {
+            resultsHeader.parentNode.insertBefore(explanationDiv, resultsHeader.nextSibling);
+        } else {
+            this.searchResults.prepend(explanationDiv);
         }
     }
 
@@ -297,6 +368,19 @@ class AdvancedSearchEngine {
      * Generate HTML for individual book card
      */
     generateBookCardHTML(book) {
+        // Debug: Log book data and AI relevance info
+        console.log('Book data:', {
+            fields: Object.keys(book),
+            relevance_score: book.relevance_score,
+            matched_terms: book.matched_terms,
+            ai_explanation: book.ai_explanation
+        });
+        
+        // Use local SearchBookUtils to resolve cover URL
+        const possibleCoverFields = book.cover || book.cover_path || book.file_path;
+        const coverUrl = possibleCoverFields ? SearchBookUtils.resolveCoverUrl(possibleCoverFields) : 'static/img/books.png';
+        console.log('Final Cover URL:', coverUrl);
+        
         const availability = book.quantity > 0 ? 
             `<span style="color: #51cf66; font-weight: 500;">Available (${book.quantity})</span>` : 
             `<span style="color: #ff6b6b; font-weight: 500;">Not Available</span>`;
@@ -313,8 +397,12 @@ class AdvancedSearchEngine {
             // Mobile-first: stacked, full-width cover and maximized space
             return `
                 <div class="search-result-item" style="border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; margin-bottom: 12px; background: #fff; display: flex; flex-direction: column; gap: 12px; width: 100%;">
-                    <div class="book-cover" style="width: 100%; height: 180px; border-radius: 8px; background: linear-gradient(135deg,rgb(159,159,159) 0%, rgb(135,135,135) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 700;">
-                        ${book.title ? book.title.charAt(0).toUpperCase() : 'B'}
+                    <div class="book-cover" style="width: 100%; height: 180px; border-radius: 8px; overflow: hidden;">
+                        <img src="${coverUrl}" 
+                            alt="${book.title || 'Book Cover'}"
+                            style="width: 100%; height: 100%; object-fit: cover;"
+                            onerror="this.src='static/img/books.png'; this.onerror=null;"
+                            onload="console.log('Image loaded successfully:', this.src)">
                     </div>
                     <div class="book-info" style="display: flex; flex-direction: column; gap: 6px;">
                         <div class="request-title" style="font-weight: 600; font-size: 18px; color: #111827;">${book.title || 'Untitled'}</div>
@@ -338,8 +426,12 @@ class AdvancedSearchEngine {
         return `
             <div class="search-result-item" style="position: relative; border: 1px solid #e1e5e9; border-radius: 12px; padding: 14px; margin-bottom: 12px; background: #f8f9fa; transition: all 0.3s ease; cursor: pointer;" data-book-id="${book.id}">
                 <div style="display: flex; gap: 16px; align-items: flex-start;">
-                    <div class="book-cover" style="width: ${coverW}px; height: ${coverH}px; background: linear-gradient(135deg,rgb(159, 159, 159) 0%,rgb(135, 135, 135) 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-                        ${book.title ? book.title.charAt(0).toUpperCase() : 'B'}
+                    <div class="book-cover" style="width: ${coverW}px; height: ${coverH}px; border-radius: 8px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                        <img src="${coverUrl}" 
+                            alt="${book.title || 'Book Cover'}"
+                            style="width: 100%; height: 100%; object-fit: cover;"
+                            onerror="this.src='static/img/books.png'; this.onerror=null;"
+                            onload="console.log('Image loaded successfully:', this.src)">
                     </div>
                     <div class="book-info" style="flex: 1;">
                         <h4 style="margin: 0 0 6px 0; color: #333; font-size: 18px; font-weight: 600;">${book.title || 'Untitled'}</h4>
@@ -417,7 +509,15 @@ class AdvancedSearchEngine {
         this.searchResults.innerHTML = `
             <div style="text-align: center; padding: ${pad}px; color: #666;">
                 <div style="display: inline-block; width: ${spinner}px; height: ${spinner}px; border: ${border}px solid #f3f3f3; border-top: ${border}px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <p style="margin-top: 12px; font-size: ${text}px;">Searching with AI-powered engine...</p>
+                <p style="margin-top: 12px; font-size: ${text}px;">
+                    <span style="display: block; margin-bottom: 8px;">
+                        <i class="fas fa-robot" style="margin-right: 6px;"></i>
+                        AI-Powered Search in Progress
+                    </span>
+                    <span style="font-size: ${parseInt(text)-2}px; color: #888;">
+                        Analyzing your query for the most relevant matches...
+                    </span>
+                </p>
             </div>
         `;
         this.searchResults.style.display = 'block';
@@ -433,7 +533,7 @@ class AdvancedSearchEngine {
         const text = mobile ? 14 : 16;
         this.searchResults.innerHTML = `
             <div style="text-align: center; padding: ${pad}px; color: #ff6b6b;">
-                <div style="font-size: ${icon}px; margin-bottom: 12px;">⚠️</div>
+                <div style="font-size: ${icon}px; margin-bottom: 12px;">!</div>
                 <p style="font-size: ${text}px; margin: 0;">${message}</p>
             </div>
         `;
@@ -451,7 +551,7 @@ class AdvancedSearchEngine {
         const sub = mobile ? 12 : 14;
         this.searchResults.innerHTML = `
             <div style="text-align: center; padding: ${pad}px; color: #666;">
-                <div style="font-size: ${icon}px; margin-bottom: 12px;">📚</div>
+                <div style="font-size: ${icon}px; margin-bottom: 12px;">:(</div>
                 <p style="font-size: ${text}px; margin: 0;">${message}</p>
                 <p style="font-size: ${sub}px; margin: 8px 0 0 0; color: #888;">Try different keywords or check your spelling</p>
             </div>
