@@ -153,6 +153,16 @@ function showContent(contentType) {
                 }
             }
             break;
+        case 'admins':
+            const adminsContent = document.getElementById('adminsContent');
+            if (adminsContent) {
+                adminsContent.style.display = 'block';
+                adminsContent.classList.add('visible');
+                if (typeof loadAdmins === 'function') {
+                    loadAdmins();
+                }
+            }
+            break;
         case 'requests':
             const requestsContent = document.getElementById('requestsContent');
             if (requestsContent) {
@@ -168,6 +178,19 @@ function showContent(contentType) {
             if (historyContent) {
                 historyContent.style.display = 'block';
                 historyContent.classList.add('visible');
+                if (typeof loadAuditLog === 'function') {
+                    loadAuditLog();
+                }
+            }
+            break;
+        case 'change-password':
+            const changePasswordContent = document.getElementById('changePasswordContent');
+            if (changePasswordContent) {
+                changePasswordContent.style.display = 'block';
+                changePasswordContent.classList.add('visible');
+                if (typeof setupChangePasswordForm === 'function') {
+                    setupChangePasswordForm();
+                }
             }
             break;
         default:
